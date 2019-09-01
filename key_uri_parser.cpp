@@ -1,16 +1,23 @@
 #include "key_uri_parser.hpp"
 
-key_uri_parser::key_uri_parser(const std::string &_uri) : uri(_uri)
+#include <utility>
+#include <esp_log.h>
+
+#define TAG "uri_parser"
+
+key_uri_parser::key_uri_parser(std::string _uri) : uri(std::move(_uri))
 {
 }
 
 esp_err_t key_uri_parser::parse()
 {
     // Step 1: Probe the schema. If success, move to the 10th char (remove "otpauth://")
+    ESP_LOGI(TAG, "Parsing schema...");
     if(uri.find("otpauth://") == std::string_view::npos) return ESP_ERR_INVALID_ARG;
     uri = uri.substr(10);
 
     // Step 2: Parse type
+    ESP_LOGI(TAG, "Parsing type...");
     auto type_str = uri.substr(0, 4);
     if(type_str == "totp") time_based = true;
     else if(type_str == "hotp") time_based = false;
@@ -18,6 +25,7 @@ esp_err_t key_uri_parser::parse()
     uri = uri.substr(5); // Skip "[h,t]otp/"
 
     // Step 3: Parse provider label
+    ESP_LOGI(TAG, "Parsing label...");
     auto label_end = uri.find('?');
     if(label_end == std::string_view::npos) return ESP_ERR_INVALID_ARG;
     label = decode_uri(uri.substr(0, label_end));
@@ -25,19 +33,24 @@ esp_err_t key_uri_parser::parse()
 
     // Step 4: Parse each of the "query parameters"
     // Secret
+    ESP_LOGI(TAG, "Parsing secret...");
     secret = get_query_val(uri, "secret");
 
     // Issuer
+    ESP_LOGI(TAG, "Parsing issuer...");
     issuer = decode_uri(get_query_val(uri, "issuer"));
 
     // Counter (for HOTP only)
+    ESP_LOGI(TAG, "Parsing counter...");
     if(!time_based) counter = std::strtol(get_query_val(uri, "counter").data(), nullptr, 10);
 
     // Interval/Period
+    ESP_LOGI(TAG, "Parsing interval...");
     interval = std::strtol(get_query_val(uri, "period").data(), nullptr, 10);
     if(interval < 1) return ESP_ERR_INVALID_ARG;
 
     // Digits
+    ESP_LOGI(TAG, "Parsing digits...");
     digits = std::strtol(get_query_val(uri, "digits").data(), nullptr, 10);
     if(digits < 6) return ESP_ERR_INVALID_ARG;
 
@@ -95,6 +108,31 @@ std::string_view key_uri_parser::get_query_val(std::string_view _query, const st
     }
 
     return std::string_view();
+}
+
+std::string key_uri_parser::get_issuer()
+{
+    return issuer;
+}
+
+std::string key_uri_parser::get_secret()
+{
+    return secret;
+}
+
+uint32_t key_uri_parser::get_digits()
+{
+    return digits;
+}
+
+uint32_t key_uri_parser::get_interval()
+{
+    return interval;
+}
+
+uint64_t key_uri_parser::get_counter()
+{
+    return counter;
 }
 
 
