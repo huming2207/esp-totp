@@ -28,7 +28,9 @@ esp_err_t key_uri_parser::parse()
     ESP_LOGI(TAG, "Parsing label...");
     auto label_end = uri.find('?');
     if(label_end == std::string_view::npos) return ESP_ERR_INVALID_ARG;
-    label = decode_uri(uri.substr(0, label_end));
+    auto label_raw = uri.substr(0, label_end);
+    ESP_LOGI(TAG, "Got label: %s", label_raw.c_str());
+    label = decode_uri(label_raw);
     uri = uri.substr(label_end);
 
     // Step 4: Parse each of the "query parameters"
@@ -101,10 +103,13 @@ std::string key_uri_parser::get_label()
 
 std::string_view key_uri_parser::get_query_val(std::string_view _query, const std::string& key)
 {
+    ESP_LOGI(TAG, "Query: %s, key to find: %s", _query.data(), key.c_str());
     auto query_pos = _query.find(key);
     if(query_pos != std::string_view::npos) {
         // _query.substr's position +1 offset is for '='
-        return _query.substr(query_pos + key.length() + 1, _query.find_first_of('&', query_pos));
+        auto start_pos = query_pos + key.length() + 1;
+        auto end_pos = _query.find_first_of('&', query_pos);
+        return _query.substr(start_pos, end_pos - start_pos);
     }
 
     return std::string_view();
