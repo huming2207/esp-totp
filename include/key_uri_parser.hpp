@@ -18,8 +18,8 @@ class key_uri_parser
         uint64_t get_counter();
     private:
         bool time_based = true;
-        static std::string decode_uri(std::string_view _uri);
-        static std::string_view get_query_val(std::string_view _query, const std::string& key);
+        static std::string decode_uri(const std::string& _uri);
+        static std::string get_query_val(const std::string& _query, const std::string& key);
         std::string uri;
         std::string secret;
         std::string label;

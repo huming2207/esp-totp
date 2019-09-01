@@ -64,12 +64,15 @@ bool key_uri_parser::is_time_based()
     return time_based;
 }
 
-std::string key_uri_parser::decode_uri(std::string_view _uri)
+std::string key_uri_parser::decode_uri(const std::string& _uri)
 {
+    ESP_LOGI(TAG, "Input uri: %s", _uri.data());
     std::string result;
     result.reserve(_uri.size());
     char a = '\0', b = '\0';
-    for(auto idx = 0; idx < (int)(_uri.size() - 2); idx++) {
+
+    size_t idx = 0;
+    while(idx < _uri.size()) {
         a = _uri[idx + 1];
         b = _uri[idx + 2];
         if(_uri[idx] == '%' && isxdigit(a) && isxdigit(b)) {
@@ -86,11 +89,16 @@ std::string key_uri_parser::decode_uri(std::string_view _uri)
             else
                 b -= '0';
 
-            result[idx] = 16 * a + b;
+            result += (char)(16 * a + b);
+
+            ESP_LOGI(TAG, "a: %c, b: %c, result: %c", _uri[idx + 1], _uri[idx + 2], result[idx]);
+            idx += 3;
         } else if(_uri[idx] == '+') {
-            result[idx] = ' ';
+            result += ' ';
+            idx++;
         } else {
-            result[idx] = _uri[idx];
+            result += _uri[idx];
+            idx++;
         }
     }
     return result;
@@ -101,18 +109,18 @@ std::string key_uri_parser::get_label()
     return label;
 }
 
-std::string_view key_uri_parser::get_query_val(std::string_view _query, const std::string& key)
+std::string key_uri_parser::get_query_val(const std::string& _query, const std::string& key)
 {
     ESP_LOGI(TAG, "Query: %s, key to find: %s", _query.data(), key.c_str());
     auto query_pos = _query.find(key);
-    if(query_pos != std::string_view::npos) {
+    if(query_pos != std::string::npos) {
         // _query.substr's position +1 offset is for '='
         auto start_pos = query_pos + key.length() + 1;
         auto end_pos = _query.find_first_of('&', query_pos);
         return _query.substr(start_pos, end_pos - start_pos);
     }
 
-    return std::string_view();
+    return std::string();
 }
 
 std::string key_uri_parser::get_issuer()
