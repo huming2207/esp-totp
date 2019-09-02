@@ -16,6 +16,9 @@ class key_uri_parser
         uint32_t get_digits();
         uint32_t get_interval();
         uint64_t get_counter();
+        static int base32_encode(const uint8_t *data, int length, char *result, int encode_len);
+        static int base32_decode(const char *encoded, uint8_t *result, int buf_len);
+
     private:
         bool time_based = true;
         static std::string decode_uri(const std::string& _uri);
