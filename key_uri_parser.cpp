@@ -2,6 +2,7 @@
 
 #include <utility>
 #include <esp_log.h>
+#include <cstring>
 
 #define TAG "uri_parser"
 
@@ -157,6 +158,11 @@ uint64_t key_uri_parser::get_counter()
  */
 int key_uri_parser::base32_decode(const char *encoded, uint8_t *result, int buf_len)
 {
+    if(encoded == nullptr || result == nullptr) return -1;
+
+    // Base32's overhead must be at least 1.4x than the decoded bytes, so the result output must be bigger than this
+    if(std::strlen(encoded) > buf_len * 1.4) return -1;
+
     int buffer = 0;
     int bits_left = 0;
     int count = 0;
