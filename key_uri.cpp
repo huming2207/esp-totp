@@ -1,4 +1,4 @@
-#include "key_uri_parser.hpp"
+#include "key_uri.hpp"
 
 #include <utility>
 #include <esp_log.h>
@@ -6,11 +6,11 @@
 
 #define TAG "uri_parser"
 
-key_uri_parser::key_uri_parser(std::string _uri) : uri(std::move(_uri))
+key_uri::key_uri(std::string _uri) : uri(std::move(_uri))
 {
 }
 
-esp_err_t key_uri_parser::parse()
+esp_err_t key_uri::parse()
 {
     // Step 1: Probe the schema. If success, move to the 10th char (remove "otpauth://")
     ESP_LOGD(TAG, "Parsing schema...");
@@ -60,12 +60,12 @@ esp_err_t key_uri_parser::parse()
     return ESP_OK;
 }
 
-bool key_uri_parser::is_time_based()
+bool key_uri::is_time_based()
 {
     return time_based;
 }
 
-std::string key_uri_parser::decode_uri(const std::string& _uri)
+std::string key_uri::decode_uri(const std::string& _uri)
 {
     ESP_LOGD(TAG, "Input uri: %s", _uri.data());
     std::string result;
@@ -104,12 +104,12 @@ std::string key_uri_parser::decode_uri(const std::string& _uri)
     return result;
 }
 
-std::string key_uri_parser::get_label()
+std::string key_uri::get_label()
 {
     return label;
 }
 
-std::string key_uri_parser::get_query_val(const std::string& _query, const std::string& key)
+std::string key_uri::get_query_val(const std::string& _query, const std::string& key)
 {
     ESP_LOGD(TAG, "Query: %s, key to find: %s", _query.data(), key.c_str());
     auto query_pos = _query.find(key);
@@ -123,27 +123,27 @@ std::string key_uri_parser::get_query_val(const std::string& _query, const std::
     return std::string();
 }
 
-std::string key_uri_parser::get_issuer()
+std::string key_uri::get_issuer()
 {
     return issuer;
 }
 
-std::string key_uri_parser::get_secret()
+std::string key_uri::get_secret()
 {
     return secret;
 }
 
-uint32_t key_uri_parser::get_digits()
+uint32_t key_uri::get_digits()
 {
     return digits;
 }
 
-uint32_t key_uri_parser::get_interval()
+uint32_t key_uri::get_interval()
 {
     return interval;
 }
 
-uint64_t key_uri_parser::get_counter()
+uint64_t key_uri::get_counter()
 {
     return counter;
 }
@@ -156,7 +156,7 @@ uint64_t key_uri_parser::get_counter()
  * @param buf_len Bytes length
  * @return -1 if failed, or length decoded
  */
-int key_uri_parser::base32_decode(const char *encoded, uint8_t *result, int buf_len)
+int key_uri::base32_decode(const char *encoded, uint8_t *result, int buf_len)
 {
     if(encoded == nullptr || result == nullptr) return -1;
 
@@ -213,7 +213,7 @@ int key_uri_parser::base32_decode(const char *encoded, uint8_t *result, int buf_
  * @param encode_len Maximum length of the string
  * @return -1 if failed, or the length encoded
  */
-int key_uri_parser::base32_encode(const uint8_t *data, int length, char *result, int encode_len)
+int key_uri::base32_encode(const uint8_t *data, int length, char *result, int encode_len)
 {
     if (length < 0 || length > (1 << 28)) {
         return -1;
@@ -247,3 +247,5 @@ int key_uri_parser::base32_encode(const uint8_t *data, int length, char *result,
 
     return count;
 }
+
+

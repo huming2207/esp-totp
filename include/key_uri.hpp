@@ -4,10 +4,10 @@
 #include <string_view>
 #include <esp_err.h>
 
-class key_uri_parser
+class key_uri
 {
     public:
-        explicit key_uri_parser(std::string  _uri);
+        explicit key_uri(std::string _uri);
         esp_err_t parse();
         bool is_time_based();
         std::string get_label();
