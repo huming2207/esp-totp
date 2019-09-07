@@ -255,4 +255,9 @@ std::string otp_key::get_uri()
     return uri;
 }
 
+int otp_key::get_secret(uint8_t *result, int buf_len)
+{
+    return base32_decode(uri.c_str(), result, buf_len);
+}
+
 

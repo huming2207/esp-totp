@@ -17,6 +17,7 @@ class otp_key
         uint32_t get_interval();
         uint64_t get_counter();
         std::string get_uri();
+        int get_secret(uint8_t *result, int buf_len);
         static int base32_encode(const uint8_t *data, int length, char *result, int encode_len);
         static int base32_decode(const char *encoded, uint8_t *result, int buf_len);
 
