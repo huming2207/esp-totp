@@ -12,49 +12,51 @@ key_uri::key_uri(std::string _uri) : uri(std::move(_uri))
 
 esp_err_t key_uri::parse()
 {
+    std::string_view _uri(uri);
+
     // Step 1: Probe the schema. If success, move to the 10th char (remove "otpauth://")
     ESP_LOGD(TAG, "Parsing schema...");
-    if(uri.find("otpauth://") == std::string_view::npos) return ESP_ERR_INVALID_ARG;
-    uri = uri.substr(10);
+    if(_uri.find("otpauth://") == std::string_view::npos) return ESP_ERR_INVALID_ARG;
+    _uri = _uri.substr(10);
 
     // Step 2: Parse type
     ESP_LOGD(TAG, "Parsing type...");
-    auto type_str = uri.substr(0, 4);
+    auto type_str = _uri.substr(0, 4);
     if(type_str == "totp") time_based = true;
     else if(type_str == "hotp") time_based = false;
     else return ESP_ERR_INVALID_ARG;
-    uri = uri.substr(5); // Skip "[h,t]otp/"
+    _uri = _uri.substr(5); // Skip "[h,t]otp/"
 
     // Step 3: Parse provider label
     ESP_LOGD(TAG, "Parsing label...");
-    auto label_end = uri.find('?');
+    auto label_end = _uri.find('?');
     if(label_end == std::string_view::npos) return ESP_ERR_INVALID_ARG;
-    auto label_raw = uri.substr(0, label_end);
-    ESP_LOGD(TAG, "Got label: %s", label_raw.c_str());
+    auto label_raw = _uri.substr(0, label_end);
+    ESP_LOGD(TAG, "Got label: %s", label_raw.data());
     label = decode_uri(label_raw);
-    uri = uri.substr(label_end);
+    _uri = _uri.substr(label_end);
 
     // Step 4: Parse each of the "query parameters"
     // Secret
     ESP_LOGD(TAG, "Parsing secret...");
-    secret = get_query_val(uri, "secret");
+    secret = get_query_val(_uri, "secret");
 
     // Issuer
     ESP_LOGD(TAG, "Parsing issuer...");
-    issuer = decode_uri(get_query_val(uri, "issuer"));
+    issuer = decode_uri(get_query_val(_uri, "issuer"));
 
     // Counter (for HOTP only)
     ESP_LOGD(TAG, "Parsing counter...");
-    if(!time_based) counter = std::strtol(get_query_val(uri, "counter").data(), nullptr, 10);
+    if(!time_based) counter = std::strtol(get_query_val(_uri, "counter").data(), nullptr, 10);
 
     // Interval/Period
     ESP_LOGD(TAG, "Parsing interval...");
-    interval = std::strtol(get_query_val(uri, "period").data(), nullptr, 10);
+    interval = std::strtol(get_query_val(_uri, "period").data(), nullptr, 10);
     if(interval < 1) return ESP_ERR_INVALID_ARG;
 
     // Digits
     ESP_LOGD(TAG, "Parsing digits...");
-    digits = std::strtol(get_query_val(uri, "digits").data(), nullptr, 10);
+    digits = std::strtol(get_query_val(_uri, "digits").data(), nullptr, 10);
     if(digits < 6) return ESP_ERR_INVALID_ARG;
 
     return ESP_OK;
@@ -65,7 +67,7 @@ bool key_uri::is_time_based()
     return time_based;
 }
 
-std::string key_uri::decode_uri(const std::string& _uri)
+std::string key_uri::decode_uri(std::string_view _uri)
 {
     ESP_LOGD(TAG, "Input uri: %s", _uri.data());
     std::string result;
@@ -109,15 +111,15 @@ std::string key_uri::get_label()
     return label;
 }
 
-std::string key_uri::get_query_val(const std::string& _query, const std::string& key)
+std::string key_uri::get_query_val(std::string_view _query, const std::string& key)
 {
     ESP_LOGD(TAG, "Query: %s, key to find: %s", _query.data(), key.c_str());
     auto query_pos = _query.find(key);
-    if(query_pos != std::string::npos) {
+    if(query_pos != std::string_view::npos) {
         // _query.substr's position +1 offset is for '='
         auto start_pos = query_pos + key.length() + 1;
         auto end_pos = _query.find_first_of('&', query_pos);
-        return _query.substr(start_pos, end_pos - start_pos);
+        return std::string(_query.substr(start_pos, end_pos - start_pos)); // Force to make a new string here
     }
 
     return std::string();
@@ -246,6 +248,11 @@ int key_uri::base32_encode(const uint8_t *data, int length, char *result, int en
     }
 
     return count;
+}
+
+std::string key_uri::get_uri()
+{
+    return uri;
 }
 
 

@@ -16,13 +16,14 @@ class key_uri
         uint32_t get_digits();
         uint32_t get_interval();
         uint64_t get_counter();
+        std::string get_uri();
         static int base32_encode(const uint8_t *data, int length, char *result, int encode_len);
         static int base32_decode(const char *encoded, uint8_t *result, int buf_len);
 
     private:
         bool time_based = true;
-        static std::string decode_uri(const std::string& _uri);
-        static std::string get_query_val(const std::string& _query, const std::string& key);
+        static std::string decode_uri(std::string_view _uri);
+        static std::string get_query_val(std::string_view _query, const std::string& key);
         std::string uri;
         std::string secret;
         std::string label;
