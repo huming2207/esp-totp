@@ -8,7 +8,7 @@
 
 #define TAG "uri_parser"
 
-otp_key::otp_key(std::string _uri) : uri(std::move(_uri))
+otp_key::otp_key(std::string _uri) : uri(std::move(_uri)), secret(20, 0)
 {
     ESP_LOGI(TAG, "Free heap after parsing: %u, Max heap block: %u",
              heap_caps_get_free_size(MALLOC_CAP_8BIT), heap_caps_get_largest_free_block(MALLOC_CAP_8BIT));
