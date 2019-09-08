@@ -3,11 +3,14 @@
 #include <utility>
 #include <esp_log.h>
 #include <cstring>
+#include <esp_heap_caps.h>
 
 #define TAG "uri_parser"
 
 otp_key::otp_key(std::string _uri) : uri(std::move(_uri))
 {
+    ESP_LOGD(TAG, "Free heap after parsing: %u, Max heap block: %u",
+             heap_caps_get_free_size(MALLOC_CAP_8BIT), heap_caps_get_largest_free_block(MALLOC_CAP_8BIT));
 }
 
 esp_err_t otp_key::parse()
@@ -160,10 +163,16 @@ uint64_t otp_key::get_counter()
  */
 int otp_key::base32_decode(const char *encoded, uint8_t *result, int buf_len)
 {
-    if(encoded == nullptr || result == nullptr) return -1;
+    if(encoded == nullptr || result == nullptr) {
+        ESP_LOGE(TAG, "String or buffer are null");
+        return -1;
+    }
 
     // Base32's overhead must be at least 1.4x than the decoded bytes, so the result output must be bigger than this
-    if(std::strlen(encoded) > buf_len * 1.4) return -1;
+    if(std::strlen(encoded) > buf_len * 1.4) {
+        ESP_LOGE(TAG, "Buffer length is too short!");
+        return -1;
+    }
 
     int buffer = 0;
     int bits_left = 0;
@@ -190,6 +199,7 @@ int otp_key::base32_decode(const char *encoded, uint8_t *result, int buf_len)
         } else if (ch >= '2' && ch <= '7') {
             ch -= '2' - 26;
         } else {
+            ESP_LOGE(TAG, "Invalid Base32!");
             return -1;
         }
 
@@ -257,7 +267,8 @@ std::string otp_key::get_uri()
 
 int otp_key::get_secret(uint8_t *result, int buf_len)
 {
-    return base32_decode(uri.c_str(), result, buf_len);
+    ESP_LOGD(TAG, "Decoding %s", secret.c_str());
+    return base32_decode(secret.c_str(), result, buf_len);
 }
 
 
