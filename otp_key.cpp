@@ -149,7 +149,7 @@ std::string otp_key::get_issuer()
     return issuer;
 }
 
-std::vector<uint8_t> otp_key::get_secret()
+const std::vector<uint8_t>& otp_key::get_secret() const
 {
     return secret;
 }

@@ -13,7 +13,7 @@ class otp_key
         bool is_time_based();
         std::string get_label();
         std::string get_issuer();
-        std::vector<uint8_t> get_secret();
+        [[nodiscard]] const std::vector<uint8_t>& get_secret() const;
         uint32_t get_digits();
         uint32_t get_interval();
         uint64_t get_counter();
