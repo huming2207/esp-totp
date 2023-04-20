@@ -15,7 +15,7 @@
  */
 uint32_t otp::hotp_generate(uint8_t *key, size_t key_len, uint64_t interval, size_t digits)
 {
-    uint8_t *digest = nullptr;
+    uint8_t digest[128];
     uint32_t endianness;
 
     // Endianness detection
@@ -28,6 +28,8 @@ uint32_t otp::hotp_generate(uint8_t *key, size_t key_len, uint64_t interval, siz
 
     // First Phase, get the digest of the message using the provided key ...
     hotp_hmac(key, key_len, interval, digest);
+    // above call can be replaced with embedtls wrapper function for hmac.
+    // mbedtls_md_hmac(mbedtls_md_info_from_type(MBEDTLS_MD_SHA1), key, key_len, &interval, sizeof(interval), digest);
 
     // Second Phase, get the dbc from the algorithm
     uint32_t dbc = hotp_dt(digest);
